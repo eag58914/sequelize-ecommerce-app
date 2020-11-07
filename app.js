@@ -11,6 +11,8 @@ const Product = require('./models/product')
 const User = require('./models/user')
 const Cart = require('./models/cart')
 const cartItem = require('./models/cart-item')
+const Order = require('./models/order') 
+const orderItem = require('./models/order-item') 
 
 
 app.set('view engine', 'ejs');
@@ -19,6 +21,7 @@ app.set('views', 'views');
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const CartItem = require('./models/cart-item');
+const OrderItem = require('./models/order-item');
 
 
 
@@ -40,18 +43,22 @@ app.use(shopRoutes);
 
 app.use(errorController.get404);
 
+//Database relations
 Product.belongsTo(User,{constraints: true, onDelete: 'CASCADE'});
 User.hasMany(Product);
 User.hasOne(Cart)
 Cart.belongsTo(User)
 Cart.belongsToMany(Product,{through: CartItem})
 Product.belongsToMany(Cart, {through: CartItem})
+Order.belongsTo(User)
+User.hasMany(Order)
+Order.belongsToMany(Product, {through: OrderItem})
 
 
 
 sequelize
-// .sync()
- .sync({force:true})
+.sync()
+ //.sync({force:true})
 .then(result=>{
     return User.findByPk(1);
 }).then(user=>{
@@ -61,7 +68,9 @@ sequelize
     return Promise.resolve(user)
 })
 .then(user=>{
-    console.log(user)
+    return user.createCart()
+})
+.then(cart=>{
     app.listen(3000);
 })
 .catch(err=>[
